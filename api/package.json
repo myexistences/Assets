@@ -2,7 +2,7 @@
   "name": "github-discord-webhook",
   "version": "1.0.0",
   "description": "GitHub webhook to send specific file commits to Discord",
-  "main": "api/github-webhook.js",
+  "main": "github-webhook.js",
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel dev",
