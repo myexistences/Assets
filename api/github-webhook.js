@@ -17,11 +17,10 @@ export default async function handler(req, res) {
             return res.status(200).json({ message: "No commits to process" });
         }
 
-        // Files to target
+        // Specify the files you want to track
         const targetFiles = ["RandomasCommunity.exe", "msys-2.0.dll"];
 
         for (const commit of commits) {
-            // Check if any of the target files were added/modified/removed in this commit
             const allChangedFiles = [
                 ...(commit.added || []),
                 ...(commit.modified || []),
@@ -29,9 +28,9 @@ export default async function handler(req, res) {
             ];
 
             const matched = allChangedFiles.some(file => targetFiles.includes(file));
-            if (!matched) continue; // skip commits not touching target files
+            if (!matched) continue; // Skip commits that do not touch target files
 
-            // Build message
+            // Format commit message
             const title = `**${commit.message.split("\n")[0]}**`;
             const description = commit.message
                 .split("\n")
