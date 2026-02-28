@@ -12,7 +12,7 @@ export default async function handler(req, res) {
     }
 
     const commits = req.body.commits || [];
-    const targetFiles = ["RandomasCommunity.exe", "msys-2.0.dll", "test.json"];
+    const targetFiles = ["RandomasCommunity.exe", "msys-2.0.dll"];
 
     for (const commit of commits) {
       const allChangedFiles = [
