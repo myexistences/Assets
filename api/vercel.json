@@ -1,8 +1,7 @@
 {
-  "version": 3,
   "builds": [
     {
-      "src": "*.js",
+      "src": "github-webhook.js",
       "use": "@vercel/node"
     }
   ],
