@@ -24,19 +24,66 @@ export default async function handler(req, res) {
       const matched = allChangedFiles.some(file => targetFiles.includes(file));
       if (!matched) continue;
 
-      const title = `**${commit.message.split("\n")[0]}**`;
-      const description = commit.message
-        .split("\n")
-        .slice(1)
-        .map(line => {
-          if (line.startsWith("+")) return `+ ${line.slice(1)}`;
-          if (line.startsWith("-")) return `- ${line.slice(1)}`;
-          return line;
-        })
-        .join("\n");
+      // FIX 1: Safely handle both Windows (\r\n) and Linux (\n) line endings
+      const lines = commit.message.split(/\r?\n/);
+      const title = `**${lines[0].trim()}**`;
+      const bodyLines = lines.slice(1);
 
+      const blocks = [];
+      let currentBlock = null;
+
+      for (let line of bodyLines) {
+        // FIX 2: Strip surrounding whitespace so accidental spaces don't break logic
+        const cleanLine = line.trim();
+        
+        let detectedType = null;
+        let processedLine = cleanLine;
+
+        // Skip completely empty lines if you don't want them breaking up blocks
+        // (Remove this if you want empty lines to appear in Discord)
+        if (cleanLine.length === 0) continue; 
+
+        // 1. Detect block type based on unique symbols
+        if (cleanLine.startsWith("[") && cleanLine.endsWith("]")) {
+          detectedType = "ini"; 
+        } else if (cleanLine.startsWith("+") || cleanLine.startsWith("-")) {
+          detectedType = "diff"; 
+          // Ensure there is exactly one space after the + or - for clean Discord rendering
+          if (cleanLine.startsWith("+")) processedLine = `+ ${cleanLine.slice(1).trim()}`;
+          if (cleanLine.startsWith("-")) processedLine = `- ${cleanLine.slice(1).trim()}`;
+        } else if (cleanLine.startsWith("!") || (cleanLine.toUpperCase() === cleanLine && cleanLine.match(/[A-Z]/))) {
+          // Added a regex check to ensure it actually contains letters, 
+          // otherwise numbers like "123" would trigger the ALL CAPS fix block.
+          detectedType = "fix"; 
+          processedLine = cleanLine.startsWith("!") ? cleanLine.slice(1).trim() : cleanLine;
+        } else {
+          detectedType = "text"; 
+        }
+
+        // 2. Group consecutive lines
+        if (currentBlock && currentBlock.type === detectedType) {
+          currentBlock.lines.push(processedLine);
+        } else {
+          if (currentBlock) blocks.push(currentBlock);
+          currentBlock = { type: detectedType, lines: [processedLine] };
+        }
+      }
+      
+      if (currentBlock) blocks.push(currentBlock);
+
+      // 3. Construct description
+      let description = "";
+      for (const block of blocks) {
+        if (block.type === "text") {
+          description += block.lines.join("\n") + "\n";
+        } else {
+          description += `\`\`\`${block.type}\n${block.lines.join("\n")}\n\`\`\`\n`;
+        }
+      }
+
+      // 4. Send payload
       const payload = {
-        content: description ? `${title}\n\`\`\`diff\n${description}\n\`\`\`` : title
+        content: description.trim() ? `${title}\n${description.trim()}` : title
       };
 
       await axios.post(DISCORD_WEBHOOK, payload).catch(err => {
