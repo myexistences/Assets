@@ -46,7 +46,7 @@
 
 ## ℹ️ About This Mirror
 
-This repository is part of the **[myexistences](https://github.com/myexistences)** test account
+This repository is part of the **[rabbanyhmm](https://github.com/rabbanyhmm)** test account
 and serves purely as a **reference stub**. It does **not** contain source code.
 
 - The full project is maintained by **[@rabbanyhmm](https://github.com/rabbanyhmm)**
